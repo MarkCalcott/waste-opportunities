@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>By-product register — waste stream cascade</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap');
+:root{--ground:#E8EAE3;--paper:#F4F5F1;--ink:#16211C;--soft:#5A6154;--rule:#C3C8BC;
+  --t0:#5A6154;--t1:#4E6B3F;--t2:#A8801F;--t3:#34426B;--warn:#8A3324}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:14px;line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding:26px 20px 60px}
+.disp{font-family:'Archivo Narrow',sans-serif;text-transform:uppercase;
+  letter-spacing:.09em;font-weight:600;margin:0}
+.mono{font-family:'IBM Plex Mono',monospace}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--soft)}
+.keybar{background:var(--paper);border:1px solid var(--rule);padding:12px;margin-bottom:18px;
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.keybar input{flex:1;min-width:200px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;
+  gap:16px;border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:22px}
+h1{font-size:29px;line-height:1.05}
+header p{max-width:540px;color:var(--soft);margin:8px 0 0}
+.grid{display:flex;gap:22px;align-items:flex-start}
+@media(max-width:900px){.grid{flex-direction:column}}
+.core{display:flex;flex-direction:column;gap:4px;width:62px;flex-shrink:0}
+@media(max-width:900px){.core{flex-direction:row;width:100%}}
+.horizon{flex:1;height:124px;border:1px solid var(--rule);position:relative;opacity:.45;
+  transition:background .6s ease,opacity .6s ease,border-color .6s ease}
+@media(max-width:900px){.horizon{height:44px}}
+.horizon.on{opacity:1}
+.horizon .hc{position:absolute;top:5px;left:6px;font-size:10px;color:var(--soft)}
+.horizon .hn{position:absolute;bottom:8px;left:6px;right:4px;font-size:9px;line-height:1.3;color:var(--soft)}
+@media(max-width:900px){.horizon .hn{display:none}}
+.horizon.on .hc,.horizon.on .hn{color:var(--paper)}
+.col-chat{width:35%;flex-shrink:0}.col-panel{flex:1;min-width:0}
+@media(max-width:900px){.col-chat,.col-panel{width:100%}}
+.card{background:var(--paper);border:1px solid var(--rule)}
+.chatbox{padding:16px;max-height:500px;min-height:230px;overflow-y:auto}
+.msg{margin-bottom:15px;animation:f .45s ease both}
+.msg p{margin:0;padding-left:10px;white-space:pre-wrap;border-left:2px solid var(--rule)}
+.msg.you p{border-left-color:var(--ink)}
+.msg.sys p{color:var(--soft);border-left-color:var(--t1)}
+.msg.clock p{color:var(--soft);border-left-color:var(--t2)}
+@keyframes f{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.msg,.fade{animation:none}
+  .horizon,.tick,.dwell-fill{transition:none}}
+.fade{animation:f .45s ease both}
+textarea,input{background:var(--paper);border:1px solid var(--rule);color:var(--ink);
+  font-family:inherit;font-size:14px;padding:11px;width:100%;resize:vertical;line-height:1.5}
+textarea:focus,input:focus{outline:2px solid var(--ink);outline-offset:-1px}
+button{font-family:'Archivo Narrow',sans-serif;text-transform:uppercase;letter-spacing:.1em;
+  font-weight:600;font-size:13px;border:1px solid var(--ink);background:var(--ink);
+  color:var(--paper);padding:10px 17px;cursor:pointer}
+button:hover:not(:disabled){opacity:.82}
+button:disabled{opacity:.35;cursor:not-allowed}
+button:focus-visible{outline:2px solid var(--t3);outline-offset:2px}
+button.ghost{background:transparent;color:var(--ink)}
+button.small{padding:6px 12px;font-size:12px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
+.row{border-top:1px solid var(--rule);padding:14px 0}
+.row:first-child{border-top:none}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:11px}
+.tag{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;
+  border:1px solid var(--t2);color:#6B5210;display:inline-block}
+.tag.res{border-color:var(--t3);color:var(--t3);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.dwell{border:1px solid var(--rule);background:var(--ground);padding:16px;margin:16px 0}
+.dwell-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;
+  gap:12px;margin-bottom:14px}
+.dwell-big{font-family:'IBM Plex Mono',monospace;font-size:25px;line-height:1}
+.ticks{display:flex;gap:2px;align-items:flex-end;height:42px}
+.tick{flex:1;background:var(--rule);height:14px;transition:height .3s,background .3s}
+.tick.past{background:var(--t1);height:22px}
+.tick.hit{background:var(--t2);height:38px}
+.tick.today{background:var(--ink);height:30px}
+.tick-labels{display:flex;justify-content:space-between;margin-top:6px}
+.stat-row{display:flex;flex-wrap:wrap;gap:22px;margin-bottom:14px}
+.stat-n{font-family:'IBM Plex Mono',monospace;font-size:21px;line-height:1.2}
+.spec{border-top:1px solid var(--rule);padding:8px 0;display:flex;justify-content:space-between;gap:16px}
+.spec .v{font-family:'IBM Plex Mono',monospace;font-size:12px;text-align:right;color:var(--soft)}
+.a1{border-left:3px solid var(--t1);padding-left:14px}
+.a2{border-left:3px solid var(--t2);padding-left:14px}
+.a3{border-left:3px solid var(--t3);padding-left:14px}
+.note{background:var(--ground);border:1px solid var(--rule);padding:14px;white-space:pre-wrap;margin:0}
+.err{color:var(--warn);font-size:13px}
+@media print{.core,.col-chat,.keybar,button{display:none}.col-panel{width:100%}
+  body{background:#fff}.card{border:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="keybar">
+  <span class="eyebrow">API key</span>
+  <input type="password" id="key" placeholder="sk-ant-…" autocomplete="off">
+  <button class="small" onclick="setKey()">Set</button>
+  <span class="eyebrow" id="keymsg">Stays in this tab only. Never saved to the file.</span>
+</div>
+
+<header>
+  <div>
+    <div class="eyebrow" style="margin-bottom:8px">By-product register · prototype</div>
+    <h1 class="disp">Waste stream cascade</h1>
+    <p>Describe an operation. The register finds what it throws away, lists it for a set
+       dwell period, and escalates on its own when nobody takes it.</p>
+  </div>
+  <button class="ghost" onclick="reset()">Start over</button>
+</header>
+
+<div class="grid">
+  <aside class="core" id="core" aria-label="Escalation depth"></aside>
+  <section class="col-chat">
+    <div class="eyebrow" style="margin-bottom:8px">Conversation</div>
+    <div class="card chatbox" id="chat" aria-live="polite"></div>
+    <div id="composer"></div>
+  </section>
+  <section class="col-panel">
+    <div class="eyebrow" style="margin-bottom:8px" id="plabel">Awaiting operation</div>
+    <div class="card" id="panel" style="min-height:300px"></div>
+    <p class="eyebrow" style="margin-top:11px;line-height:1.6">Registries compiled from public
+       sources and unverified. Volumes are model estimates. Not regulatory, biosecurity or
+       commercial advice.</p>
+  </section>
+</div>
+</div>
+
+<script>
+/* ================================================================
+   REGISTRIES — real NZ organisations and research programmes,
+   compiled from public sources. Intake terms are indicative only.
+   In production these are Bedrock Knowledge Bases over S3.
+   ================================================================ */
+
+const APPROVED_ORGS = [
+  {id:"ORG-01",name:"Pacific Rim Environmental Services",region:"Blenheim, Marlborough",
+   accepts:"Wet horticultural residue for drying and pelletising",
+   note:"Dries marc to a storable pellet for fertiliser, stock feed or fuel. Has publicly stated it needs additional streams to run year-round."},
+  {id:"ORG-02",name:"EcoGas",region:"Reporoa / national",
+   accepts:"Organic feedstock for anaerobic digestion",
+   note:"Biogas and digestate. Suits consistent, contaminant-free wet organics."},
+  {id:"ORG-03",name:"MyNoke",region:"Central North Island / national",
+   accepts:"Bulk organic residue for large-scale vermicomposting",
+   note:"Handles very large volumes including industrial organic streams."},
+  {id:"ORG-04",name:"Plateau Compost",region:"Bay of Plenty",
+   accepts:"Reject fruit and green waste for composting",
+   note:"Composts reject kiwifruit in a way that destroys viable seed, addressing wild vine biosecurity risk."},
+  {id:"ORG-05",name:"Ecostock",region:"Auckland / national",
+   accepts:"Food and processing by-product for stock feed",
+   note:"Recovers surplus food into animal feed. Subject to feed regulation and residue screening."},
+  {id:"ORG-06",name:"EnviroNZ organics",region:"National",
+   accepts:"Collected organic waste for processing and diversion",
+   note:"Collection infrastructure and organics processing at scale."},
+  {id:"ORG-07",name:"Bioresource Processing Alliance",region:"National",
+   accepts:"By-product streams with a credible high-value processing route",
+   note:"Co-funds development of processing for primary sector by-products. A funder, not a receiver."}
+];
+
+const RESEARCH = [
+  {id:"RES-01",name:"Waste to Treasure",unit:"Bragato Research Institute, University of Auckland and partners",
+   focus:"MBIE-funded programme extracting protein, lignin, cellulose, anthocyanins and tannins from grape marc for food, pharmaceutical, building and specialty chemical uses."},
+  {id:"RES-02",name:"Biomaterials from horticultural residue",unit:"Scion / NZ Institute for Bioeconomy Science",
+   focus:"Engineering cellulose and polysaccharides from reject fruit into durable plastic-free materials. Kiwifruit leather reached prototype and automotive interest via this route."},
+  {id:"RES-03",name:"Food Waste Innovation",unit:"University of Otago",
+   focus:"Cross-disciplinary research on causes, volumes and solutions across the food supply chain, including the national Food Waste Reduction Roadmap."},
+  {id:"RES-04",name:"Bioresource Processing Alliance",unit:"National consortium",
+   focus:"Technical and commercial development of processing routes for primary sector by-products, with co-funding for pilot work."}
+];
+
+const EXAMPLES = {
+  "Kiwifruit + packhouse":
+`We grow 40 ha of green and gold kiwifruit in the Bay of Plenty and run a small packhouse that also handles fruit for three neighbouring growers. Pack runs March to June.
+
+A meaningful share of fruit doesn't meet export grade — undersize, misshapen, scarring. Most goes out as stock feed or gets dumped. We also have vine prunings each winter, spent orchard netting, and used bin liners and strapping from the packhouse.`,
+
+  "Vineyard + winery":
+`240 hectares in the Wairarapa, mostly Sauvignon Blanc and Pinot Noir, plus a small kiwifruit block. Harvest runs late February through April.
+
+We pay a contractor to cart the grape marc away, and we burn most of the winter prunings on the headlands. The winery generates spent diatomaceous earth from filtration, and there's years of end-of-life bird netting behind the implement shed.`,
+
+  "Mixed vegetable":
+`We crop 300 ha in Canterbury — broccoli, cauliflower and process potatoes on rotation with cereals. Harvest runs most of the year with peaks in autumn.
+
+A large proportion of the brassica crop stays in the paddock as trash. We take back out-grade potatoes from the processor. There's irrigation pipe at end of life and a shed full of used silage wrap.`
+};
+
+const ENQUIRIES = [
+  {day:4, who:"Buyer 8841 — composting operator",   why:"Accepts this feedstock but capped at 40 km haul", score:.41},
+  {day:9, who:"Buyer 2207 — lifestyle block group", why:"Wants under 2 t, not a full campaign",           score:.33},
+  {day:16,who:"Buyer 5619 — landscape supply",      why:"Requires processed product, not raw residue",     score:.28},
+  {day:23,who:"Buyer 3390 — equine bedding",        why:"Moisture spec unreachable without drying",        score:.22}
+];
+
+const TIERS = [
+  {key:"profile", label:"Profile",       colour:"var(--t0)", code:"O"},
+  {key:"market",  label:"Marketplace",   colour:"var(--t1)", code:"A"},
+  {key:"orgs",    label:"Approved orgs", colour:"var(--t2)", code:"B"},
+  {key:"research",label:"Research",      colour:"var(--t3)", code:"C"}
+];
+
+/* ================================================================ */
+
+let KEY = "";
+const S = {stage:"intake",farm:"",log:[],busy:"",err:"",streams:[],picked:null,listing:null,
+  dwell:21,day:0,views:0,enquiries:[],orgWindow:10,orgDay:0,orgs:null,declined:false,brief:null};
+
+const el = i => document.getElementById(i);
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function setKey(){
+  KEY = el("key").value.trim();
+  el("keymsg").textContent = KEY ? "Key set for this tab." : "Enter a key to run.";
+  if(KEY) el("key").value = "";
+}
+
+async function ask(system,user){
+  if(!KEY) throw new Error("Set an API key first.");
+  const r = await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-api-key":KEY,
+      "anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1300,
+      system:system+"\n\nReturn raw JSON only. No preamble, no markdown fences.",
+      messages:[{role:"user",content:user}]})
+  });
+  const d = await r.json();
+  if(d.error) throw new Error(d.error.message||"API error");
+  const t = d.content.filter(b=>b.type==="text").map(b=>b.text).join("\n");
+  const c = t.replace(/```json/g,"").replace(/```/g,"").trim();
+  const m = [c.indexOf("{"),c.indexOf("[")].filter(i=>i>=0);
+  return JSON.parse(c.slice(Math.min(...m)));
+}
+
+function say(who,text){S.log.push({who,text});render();}
+function depth(){
+  if(S.stage==="intake"||S.stage==="streams") return 0;
+  if(S.stage==="listing"||S.stage==="live")   return 1;
+  if(S.stage==="orgs"||S.stage==="orgwait")   return 2;
+  return 3;
+}
+
+function render(){renderCore();renderChat();renderComposer();renderPanel();}
+
+function renderCore(){
+  const d = depth();
+  el("core").innerHTML = TIERS.map((t,i)=>`
+    <div class="horizon${i<=d?" on":""}" style="${i<=d?`background:${t.colour};border-color:${t.colour}`:""}" title="${t.label}">
+      <span class="hc mono">${t.code}</span><span class="hn eyebrow">${t.label}</span></div>`).join("");
+}
+
+function renderChat(){
+  const b = el("chat");
+  let h = S.log.length?"":`<p style="color:var(--soft);margin:0">Describe the operation —
+    what you grow or process, the scale, the season, and anything you currently pay to remove.</p>`;
+  h += S.log.map(m=>`<div class="msg ${m.who}">
+    <div class="eyebrow" style="margin-bottom:4px">${m.who==="you"?"Operator":m.who==="clock"?"Clock":"Register"}</div>
+    <p>${esc(m.text)}</p></div>`).join("");
+  if(S.busy) h += `<div class="msg fade"><div class="eyebrow" style="margin-bottom:4px">Working</div>
+    <p style="color:var(--t1)">${esc(S.busy)}…</p></div>`;
+  if(S.err) h += `<p class="err">${esc(S.err)}</p>`;
+  b.innerHTML = h; b.scrollTop = b.scrollHeight;
+}
+
+function renderComposer(){
+  if(S.stage!=="intake"){el("composer").innerHTML="";return;}
+  el("composer").innerHTML = `
+    <textarea id="draft" rows="7" placeholder="e.g. 40 ha kiwifruit and a small packhouse in the Bay of Plenty…"></textarea>
+    <div class="btns"><button onclick="runProfile()" ${S.busy?"disabled":""}>Find waste streams</button></div>
+    <div class="btns">${Object.keys(EXAMPLES).map(k=>`<button class="ghost small"
+      onclick="el('draft').value=EXAMPLES['${k}']">${k}</button>`).join("")}</div>`;
+}
+
+const LABELS = {intake:"Awaiting operation",streams:"Horizon O · streams identified",
+  listing:"Horizon A · listing drafted",live:"Horizon A · live on marketplace",
+  orgs:"Horizon B · approved organisations",orgwait:"Horizon B · awaiting response",
+  research:"Horizon C · research programmes"};
+
+function renderPanel(){
+  el("plabel").textContent = LABELS[S.stage]||"";
+  const p = el("panel");
+  if(S.stage==="intake")   return p.innerHTML = viewIntake();
+  if(S.stage==="streams")  return p.innerHTML = viewStreams();
+  if(S.stage==="listing"||S.stage==="live") return p.innerHTML = viewListing();
+  if(S.stage==="orgs"||S.stage==="orgwait") return p.innerHTML = viewOrgs();
+  if(S.stage==="research") return p.innerHTML = viewResearch();
+}
+
+function viewIntake(){
+  return `<div style="padding:22px">
+    <p style="color:var(--soft);margin:0 0 18px">Nothing listed yet. Streams appear here once
+      the operation is read. Each gets a dwell period on the open marketplace, then descends
+      on its own.</p>
+    ${TIERS.map(t=>`<div class="row" style="display:flex;gap:12px;align-items:baseline">
+      <span class="mono" style="font-size:11px;color:${t.colour};width:16px">${t.code}</span>
+      <span class="disp" style="font-size:13px">${t.label}</span></div>`).join("")}</div>`;
+}
+
+function viewStreams(){
+  return `<div style="padding:18px">${S.streams.map((s,i)=>`
+    <div class="row fade">
+      <div class="head"><h3 class="disp" style="font-size:16px">${esc(s.name)}</h3>
+        <span class="mono" style="font-size:12px;color:var(--soft)">${esc(s.estimate)}</span></div>
+      <p style="color:var(--soft);margin:8px 0 10px;font-size:13px">${esc(s.signal)}</p>
+      <div style="display:flex;flex-wrap:wrap;gap:4px 20px;margin-bottom:12px;font-size:12px">
+        <span><span class="eyebrow">Timing </span><span style="color:var(--soft)">${esc(s.timing)}</span></span>
+        <span><span class="eyebrow">Condition </span><span style="color:var(--soft)">${esc(s.condition)}</span></span>
+        <span><span class="eyebrow">Now </span><span style="color:var(--soft)">${esc(s.disposal)}</span></span></div>
+      <button class="small" onclick="runListing(${i})" ${S.busy?"disabled":""}>List this stream</button>
+    </div>`).join("")}</div>`;
+}
+
+function viewListing(){
+  const L = S.listing; if(!L) return "";
+  const specs = (L.specs||[]).map(s=>`<div class="spec"><span class="eyebrow">${esc(s.label)}</span>
+    <span class="v">${esc(s.value)}</span></div>`).join("");
+  const flags = (L.flags||[]).map(f=>`<span class="tag">${esc(f)}</span>`).join(" ");
+  const clock = S.stage==="listing" ? `<div class="dwell">
+      <div class="eyebrow" style="margin-bottom:10px">Set dwell period before publishing</div>
+      <div class="btns" style="margin:0">${[14,21,28].map(d=>`<button class="small ${S.dwell===d?"":"ghost"}"
+        onclick="S.dwell=${d};render()">${d} days</button>`).join("")}</div>
+      <p class="eyebrow" style="margin:12px 0 0;line-height:1.6">The listing sits open for this
+        long. If nothing qualifies by expiry, it escalates without you.</p>
+      <div class="btns"><button onclick="goLive()">Publish to marketplace</button></div>
+    </div>` : viewClock();
+
+  return `<div style="padding:18px" class="fade">
+    <div class="a1"><h3 class="disp" style="font-size:19px">${esc(L.title)}</h3>
+      <p style="color:var(--soft);margin:6px 0 0">${esc(L.summary)}</p></div>
+    <div style="margin:16px 0">${specs}
+      <div class="spec"><span class="eyebrow">Terms</span><span class="v">${esc(L.terms)}</span></div></div>
+    ${flags?`<div style="margin-bottom:8px">${flags}</div>`:""}
+    ${clock}</div>`;
+}
+
+function viewClock(){
+  const left = S.dwell - S.day, expired = left<=0;
+  const ticks = Array.from({length:S.dwell},(_,i)=>{
+    const d=i+1, hit=S.enquiries.some(e=>e.day===d);
+    let c="tick";
+    if(hit&&d<=S.day)c+=" hit"; else if(d===S.day)c+=" today"; else if(d<S.day)c+=" past";
+    return `<div class="${c}" title="Day ${d}"></div>`;}).join("");
+
+  return `<div class="dwell">
+    <div class="dwell-head">
+      <div><div class="eyebrow">Day on market</div>
+        <div class="dwell-big">${S.day} <span style="color:var(--soft);font-size:15px">/ ${S.dwell}</span></div></div>
+      <div style="text-align:right"><div class="eyebrow">${expired?"Status":"Escalates in"}</div>
+        <div class="dwell-big" style="color:${expired?"var(--warn)":"var(--ink)"};font-size:${expired?"15px":"25px"}">
+          ${expired?"Expired":left+" d"}</div></div></div>
+    <div class="ticks">${ticks}</div>
+    <div class="tick-labels"><span class="eyebrow">Published</span><span class="eyebrow">Expiry</span></div>
+    <div class="stat-row" style="margin-top:18px">
+      <div><div class="eyebrow">Views</div><div class="stat-n">${S.views}</div></div>
+      <div><div class="eyebrow">Enquiries</div><div class="stat-n">${S.enquiries.filter(e=>e.day<=S.day).length}</div></div>
+      <div><div class="eyebrow">Qualified</div><div class="stat-n" style="color:var(--warn)">0</div></div></div>
+    ${S.enquiries.filter(e=>e.day<=S.day).map(e=>`<div class="spec fade" style="align-items:flex-start">
+      <span style="font-size:13px">${esc(e.who)}
+        <span style="display:block;font-size:12px;color:var(--soft)">Day ${e.day} · ${esc(e.why)}</span></span>
+      <span class="v">${e.score.toFixed(2)}</span></div>`).join("")}
+    <div class="btns">${expired
+      ? `<button onclick="runOrgs()" ${S.busy?"disabled":""}>Escalate now</button>`
+      : `<button class="ghost small" onclick="advance(7)" ${S.busy?"disabled":""}>Advance a week</button>
+         <button class="small" onclick="advance(${left})" ${S.busy?"disabled":""}>Run to expiry</button>`}</div>
+  </div>`;
+}
+
+function viewOrgs(){
+  const left = S.orgWindow - S.orgDay;
+  return `<div style="padding:18px">
+    ${(S.orgs||[]).map(m=>{
+      const o = APPROVED_ORGS.find(x=>x.id===m.id)||{};
+      return `<div class="row fade a2">
+        <div class="head"><h3 class="disp" style="font-size:16px">${esc(o.name||m.id)}</h3>
+          <span class="mono" style="font-size:12px;color:#6B5210">fit ${esc(m.fit)} · ${esc(m.id)}</span></div>
+        <p style="margin:8px 0;font-size:13px">${esc(m.rationale)}</p>
+        <p style="margin:0 0 8px;font-size:13px;color:var(--soft)"><span class="eyebrow">Gap </span>${esc(m.gap)}</p>
+        <p style="margin:0;font-size:13px"><span class="eyebrow">Next </span>${esc(m.step)}</p>
+        <div class="mono" style="font-size:11px;color:var(--soft);margin-top:8px">${esc(o.region)}</div>
+        ${S.declined?`<div class="tag" style="margin-top:10px;border-color:var(--warn);color:var(--warn)">No capacity this season</div>`:""}
+      </div>`;}).join("")}
+    ${S.orgs?`<div class="dwell">
+      <div class="dwell-head">
+        <div><div class="eyebrow">Referral window</div>
+          <div class="dwell-big">${S.orgDay} <span style="color:var(--soft);font-size:15px">/ ${S.orgWindow}</span></div></div>
+        <div style="text-align:right"><div class="eyebrow">${S.declined?"Status":"Days left"}</div>
+          <div class="dwell-big" style="font-size:${S.declined?"15px":"25px"};color:${S.declined?"var(--warn)":"var(--ink)"}">
+            ${S.declined?"All declined":left+" d"}</div></div></div>
+      <div class="btns">${S.declined
+        ? `<button onclick="runResearch()" ${S.busy?"disabled":""}>Connect to research</button>`
+        : `<button class="small" onclick="advanceOrg()" ${S.busy?"disabled":""}>Run referral window</button>
+           <button class="ghost small" onclick="accepted()">Mark one accepted</button>`}</div>
+      ${!S.declined?`<p class="eyebrow" style="margin:12px 0 0;line-height:1.6">If an organisation
+        accepts, the cascade stops here. Otherwise it descends again.</p>`:""}
+    </div>`:""}</div>`;
+}
+
+function viewResearch(){
+  const B = S.brief; if(!B) return "";
+  return `<div style="padding:18px" class="fade">
+    <div class="eyebrow" style="margin-bottom:10px">Known applications</div>
+    ${(B.applications||[]).map(a=>`<div class="row">
+      <div class="head"><h3 class="disp" style="font-size:15px">${esc(a.application)}</h3>
+        <span class="tag res">${esc(a.maturity)}</span></div>
+      <p style="margin:6px 0 0;font-size:13px">${esc(a.evidence)}</p>
+      <p style="margin:4px 0 0;font-size:13px;color:var(--soft)">${esc(a.caveat)}</p></div>`).join("")}
+    <div class="eyebrow" style="margin:26px 0 10px">Research programmes</div>
+    ${(B.matches||[]).map(m=>{
+      const r = RESEARCH.find(x=>x.id===m.id)||{};
+      return `<div class="row a3">
+        <h3 class="disp" style="font-size:15px">${esc(r.name||m.id)}</h3>
+        <div class="mono" style="font-size:11px;color:var(--soft)">${esc(r.unit)}</div>
+        <p style="margin:6px 0;font-size:13px">${esc(m.why)}</p>
+        <p style="margin:0;font-size:13px;color:var(--t3)"><span class="eyebrow">Ask </span>${esc(m.question)}</p>
+      </div>`;}).join("")}
+    ${B.outreach?`<div style="margin-top:22px">
+      <div class="eyebrow" style="margin-bottom:8px">Draft enquiry</div>
+      <p class="note" style="font-size:13px">${esc(B.outreach)}</p></div>`:""}
+    <div class="btns"><button class="ghost small" onclick="window.print()">Print record</button></div></div>`;
+}
+
+/* ---------------- actions ---------------- */
+
+async function runProfile(){
+  const t = (el("draft")?.value||"").trim(); if(!t) return;
+  S.farm = t; S.log.push({who:"you",text:t});
+  S.busy="Reading the operation and identifying waste streams"; S.err=""; render();
+  try{
+    S.streams = await ask(
+      "You are a circular-economy analyst for agriculture and horticulture. From a description of an operation, identify the distinct waste or residue streams it generates — including ones the operator did not mention but which the operation clearly implies. Cover organic residues, out-grade or reject product, processing residues, and durable waste such as plastics, netting and pipe. Return an array of 4-6 objects with keys: name, estimate (rough annual volume with units, marked as estimated), timing, condition (moisture, contamination, physical state), disposal (what most likely happens now), signal (one sentence on why someone else might want it).",
+      "Operation:\n\n"+t);
+    S.stage="streams"; S.busy="";
+    say("sys",`Identified ${S.streams.length} streams. Volumes are estimates from operation type and scale — confirm before listing.`);
+  }catch(e){S.busy="";S.err=e.message;render();}
+}
+
+async function runListing(i){
+  S.picked = S.streams[i]; S.stage="listing";
+  S.busy="Writing the marketplace listing"; S.err=""; render();
+  try{
+    S.listing = await ask(
+      "You write listings for a free agricultural by-product marketplace. Produce a listing a potential taker can act on. Return an object with keys: title (short, plain), summary (2-3 sentences, no marketing language, honest about condition), specs (array of 4-6 {label,value} covering volume, availability window, moisture or condition, contaminants, handling and loading, location constraints), terms (one line on what is offered), flags (array of 1-3 short strings naming genuine barriers a taker should know — freight, moisture, biosecurity or regulation).",
+      "Stream: "+JSON.stringify(S.picked)+"\n\nOperation context: "+S.farm);
+    S.busy=""; say("sys","Listing drafted. Set a dwell period, then publish.");
+  }catch(e){S.busy="";S.err=e.message;render();}
+}
+
+function goLive(){
+  S.stage="live"; S.day=0; S.views=0;
+  S.enquiries = ENQUIRIES.filter(e=>e.day<=S.dwell);
+  say("sys",`Published. Open for ${S.dwell} days. A timer is set — nothing needed from you until then.`);
+}
+
+/* Production: EventBridge Scheduler one-off schedule created at publish,
+   firing a Step Functions execution at dwell expiry. */
+function advance(n){
+  const before = S.day;
+  S.day = Math.min(S.dwell,S.day+n);
+  S.views += Math.round(n*(6+(S.day%4)));
+  S.enquiries.filter(e=>e.day>before&&e.day<=S.day)
+    .forEach(e=>S.log.push({who:"clock",text:`Day ${e.day} — enquiry from ${e.who}. Not qualified: ${e.why.toLowerCase()}.`}));
+  if(S.day>=S.dwell){
+    S.log.push({who:"clock",text:`Day ${S.dwell} — dwell expired with no qualified taker. Escalating to the approved organisations register.`});
+    render(); setTimeout(runOrgs,700); return;
+  }
+  render();
+}
+
+async function runOrgs(){
+  S.stage="orgs"; S.orgDay=0; S.declined=false;
+  S.busy="Matching against the approved organisations register"; S.err=""; render();
+  try{
+    S.orgs = await ask(
+      "You match an unwanted agricultural residue against a register of receiving organisations. Use only organisations from the register given. Return an array of the 3 best fits, each with keys: id (matching the register), fit (integer 0-100), rationale (2 sentences on why this organisation could use this specific stream), gap (one sentence naming what would have to change for it to work — be honest, freight and volume are usually the real constraints), step (a concrete next action for the operator).",
+      "Stream: "+JSON.stringify(S.picked)+"\n\nListing: "+JSON.stringify(S.listing)+
+      "\n\nRegister:\n"+JSON.stringify(APPROVED_ORGS));
+    S.busy=""; S.stage="orgwait";
+    say("sys",`${S.orgs.length} organisations returned a viable use. Referrals sent, ${S.orgWindow} day response window.`);
+  }catch(e){S.busy="";S.err=e.message;render();}
+}
+
+function advanceOrg(){S.orgDay=S.orgWindow;S.declined=true;
+  say("clock",`Day ${S.orgWindow} — no organisation confirmed capacity. Escalating to research programmes.`);}
+function accepted(){S.declined=false;
+  say("sys","Organisation confirmed. The cascade stops here — the stream has a home. Reset to run the escalation path instead.");}
+
+async function runResearch(){
+  S.stage="research"; S.busy="Compiling known applications and matching programmes"; S.err=""; render();
+  try{
+    S.brief = await ask(
+      "You brief an operator on the research position for an agricultural residue, then point them at relevant programmes. Use only programmes from the directory given. Be conservative about maturity — most routes are not commercial. Return an object with keys: applications (array of 3-4 objects with keys application, maturity — one of 'commercial', 'pilot', 'research only' — evidence (one sentence on what is actually known), caveat (one sentence on the main unknown or constraint, usually volume or freight)), matches (array of 2-3 objects with keys id matching the directory, why (2 sentences), question (one specific question the operator should put to them)), outreach (a 90-word enquiry the operator could send to a programme, plain and specific, no flattery, signed 'Sent via the by-product register').",
+      "Stream: "+JSON.stringify(S.picked)+"\n\nListing: "+JSON.stringify(S.listing)+
+      "\n\nDirectory:\n"+JSON.stringify(RESEARCH));
+    S.busy=""; say("sys","Applications brief compiled.");
+  }catch(e){S.busy="";S.err=e.message;render();}
+}
+
+function reset(){
+  Object.assign(S,{stage:"intake",farm:"",log:[],busy:"",err:"",streams:[],picked:null,listing:null,
+    dwell:21,day:0,views:0,enquiries:[],orgDay:0,orgs:null,declined:false,brief:null});
+  render();
+}
+render();
+</script>
+</body>
+</html>

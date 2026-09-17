@@ -1,0 +1,3 @@
+# Terminal-only. No web server.
+pydantic-ai-slim[anthropic]>=0.4
+python-dotenv>=1.0
