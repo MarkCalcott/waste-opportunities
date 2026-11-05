@@ -20,7 +20,7 @@ The testing of standalone agents is not suitable for production. To make it more
 
 I have seen Pydantic AI and decided to use it because it is similar to Pydantic which I have been using on other projects. The features that I liked Pydantic AI for further testing is type-safe validation and retries, which is important for making sure the data is in the correct shape for the front-end, and being model agnostic allowing for other models to be selected. There are also other features as Pydantic AI is set up for production.
 
-The `SETUP.md` within the pydantic-AI-testing folder contains instructions to run agents using Pydantic AI with the command line. Due to time constraints during the hackathon, these were not linked into a front-end but show agents with schema validated output.
+The `README.md` within the pydantic-AI-testing folder contains instructions to run agents using Pydantic AI with the command line. Due to time constraints during the hackathon, these were not linked into a front-end but show agents with schema validated output.
 
 ## Next steps
 
